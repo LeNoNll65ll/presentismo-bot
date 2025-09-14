@@ -1,8 +1,8 @@
 # presentismo.py
 import os
 import logging
-from datetime import date, datetime, time
-from apscheduler.schedulers.blocking import BlockingScheduler
+from datetime import datetime, date, time
+from apscheduler.schedulers.background import BackgroundScheduler
 from dotenv import load_dotenv
 
 from evolution_api import send_text
@@ -65,14 +65,14 @@ def enviar_reporte():
     detalle = "\n".join([f"- {nombre}: {estado}" for nombre, estado in reporte.items()])
     send_text(ADMIN_ID, f"📋 Reporte detallado {datetime.now().strftime('%d/%m/%Y %H:%M')}\n\n{detalle}")
 
-if __name__ == "__main__":
-    scheduler = BlockingScheduler()
+def start_scheduler():
+    scheduler = BackgroundScheduler()
 
     # Recordatorios
     for t in RECORDATORIOS:
         try:
-            hora, minuto = map(int, t.split(":"))
-            scheduler.add_job(enviar_recordatorio, "cron", hour=hora, minute=minuto)
+            h, m = map(int, t.split(":"))
+            scheduler.add_job(enviar_recordatorio, "cron", hour=h, minute=m)
         except ValueError:
             logging.warning(f"⚠ Ignorando horario inválido en RECORDATORIOS: {t}")
 
@@ -83,8 +83,7 @@ if __name__ == "__main__":
     except ValueError:
         logging.warning(f"⚠ Horario inválido en REPORTE_FINAL: {REPORTE_FINAL}")
 
-    logging.info("✅ Bot de presentismo iniciado")
-    try:
-        scheduler.start()
-    except (KeyboardInterrupt, SystemExit):
-        pass
+    scheduler.start()
+    logging.info("✅ Scheduler de presentismo iniciado")
+
+    return scheduler 

@@ -11,6 +11,8 @@ from pytz import timezone
 
 from dotenv import load_dotenv
 
+from notificador import notificar_respuesta
+
 load_dotenv()
 
 BASE_URL = os.getenv("BASE_URL")
@@ -56,6 +58,8 @@ def save_event(evento):
     ))
     conn.commit()
     conn.close()
+    # 🔔 Nueva llamada para confirmar al usuario
+    notificar_respuesta(evento["numero_salida"], evento["mensaje"])
 
 # --- Cliente Socket.IO ---
 sio = socketio.AsyncClient()
