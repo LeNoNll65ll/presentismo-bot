@@ -1,7 +1,6 @@
-fastapi
-uvicorn
-apscheduler
-httpx
+requests
 python-dotenv
+apscheduler
 python-socketio
 aiohttp
+pytz
