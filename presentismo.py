@@ -1,7 +1,7 @@
 # presentismo.py
 import os
 import logging
-from datetime import datetime
+from datetime import date, datetime, time
 from apscheduler.schedulers.blocking import BlockingScheduler
 from dotenv import load_dotenv
 
@@ -19,22 +19,43 @@ COMPANEROS = {
     for item in os.getenv("COMPANEROS", "").split(",")
 }
 
+
+RECORDATORIOS = os.getenv("RECORDATORIOS", "07:00,07:15,07:30,08:00,08:15").split(",")
+REPORTE_FINAL = os.getenv("REPORTE_FINAL", "08:30")
+FRANJA_INICIO = os.getenv("FRANJA_INICIO", "06:00")
+FRANJA_FIN = os.getenv("REPORTE_FINAL", "08:30")
+
 logging.basicConfig(level=logging.INFO)
 
+def _parse_time(s: str) -> time:
+    h, m = map(int, s.split(":"))
+    return time(h, m)
+
 def enviar_recordatorio():
-    """Mensajes privados a cada compañero pidiendo confirmación."""
-    for numero, nombre in COMPANEROS.items():
-        texto = (
-            f"Hola {nombre},\n"
-            "Confirma tu presentismo:\n"
-            "👉 Escribe *PRESENTE* si estás.\n"
-            "👉 Escribe *AUSENTE: ...* indicando la causa si no estarás."
-        )
-        send_text(numero, texto)
+    """Manda recordatorio SOLO a los que no respondieron en la franja."""
+    inicio = _parse_time(FRANJA_INICIO)
+    fin = _parse_time(FRANJA_FIN)
+
+    reporte = get_reporte(COMPANEROS, fecha=date.today(), inicio=inicio, fin=fin)
+
+    for nombre, estado in reporte.items():
+        if estado == "AUSENTE SIN CAUSA":
+            # Buscar el número a partir del nombre
+            numero = next(num for num, nom in COMPANEROS.items() if nom == nombre)
+            texto = (
+                f"Hola {nombre},\n"
+                "Confirma tu presentismo:\n"
+                "👉 Escribe *PRESENTE* si estás.\n"
+                "👉 Escribe *AUSENTE: ...* indicando la causa si no estarás."
+            )
+            send_text(numero, texto)
 
 def enviar_reporte():
     """Genera reporte y lo manda al grupo y al admin."""
-    reporte = get_reporte(COMPANEROS)
+    inicio = _parse_time(FRANJA_INICIO)
+    fin = _parse_time(FRANJA_FIN)
+
+    reporte = get_reporte(COMPANEROS, fecha=date.today(), inicio=inicio, fin=fin)
 
     # Para grupo (sin causas)
     resumen = "\n".join([f"- {nombre}: {estado.split('(')[0].strip()}" for nombre, estado in reporte.items()])
@@ -48,11 +69,19 @@ if __name__ == "__main__":
     scheduler = BlockingScheduler()
 
     # Recordatorios
-    for hora, minuto in [(7,0),(7,15),(7,30),(8,0),(8,15)]:
-        scheduler.add_job(enviar_recordatorio, "cron", hour=hora, minute=minuto)
+    for t in RECORDATORIOS:
+        try:
+            hora, minuto = map(int, t.split(":"))
+            scheduler.add_job(enviar_recordatorio, "cron", hour=hora, minute=minuto)
+        except ValueError:
+            logging.warning(f"⚠ Ignorando horario inválido en RECORDATORIOS: {t}")
 
     # Reporte final
-    scheduler.add_job(enviar_reporte, "cron", hour=8, minute=30)
+    try:
+        h, m = map(int, REPORTE_FINAL.split(":"))
+        scheduler.add_job(enviar_reporte, "cron", hour=h, minute=m)
+    except ValueError:
+        logging.warning(f"⚠ Horario inválido en REPORTE_FINAL: {REPORTE_FINAL}")
 
     logging.info("✅ Bot de presentismo iniciado")
     try:
