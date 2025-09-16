@@ -43,10 +43,11 @@ def enviar_recordatorio():
             # Buscar el número a partir del nombre
             numero = next(num for num, nom in COMPANEROS.items() if nom == nombre)
             texto = (
-                f"Hola {nombre},\n"
-                "Confirma tu presentismo:\n"
-                "👉 Escribe *PRESENTE* si estás.\n"
-                "👉 Escribe *AUSENTE: ...* indicando la causa si no estarás."
+                f"🌞 Buen día {nombre}!\n\n"
+                "Todavía no registramos tu asistencia de hoy. Por favor, confirmá con una de estas opciones:\n\n"
+                "1 para *PRESENTE* (Ej. 1, 1 estoy demorado...)\n"
+                "2 para *AUSENTE* Seguido el motivo (Ej. 2 estoy enfermo, 2 bla bla..)\n\n"
+                "Gracias por responder 💙"
             )
             send_text(numero, texto)
 
@@ -57,9 +58,9 @@ def enviar_reporte():
 
     reporte = get_reporte(COMPANEROS, fecha=date.today(), inicio=inicio, fin=fin)
 
-    # Para grupo (sin causas)
-    resumen = "\n".join([f"- {nombre}: {estado.split('(')[0].strip()}" for nombre, estado in reporte.items()])
-    send_text(GRUPO_ID, f"📊 Presentismo {datetime.now().strftime('%d/%m/%Y %H:%M')}\n\n{resumen}")
+    # # Para grupo (sin causas)
+    # resumen = "\n".join([f"- {nombre}: {estado.split('(')[0].strip()}" for nombre, estado in reporte.items()])
+    # send_text(GRUPO_ID, f"📊 Presentismo {datetime.now().strftime('%d/%m/%Y %H:%M')}\n\n{resumen}")
 
     # Para admin (con causas)
     detalle = "\n".join([f"- {nombre}: {estado}" for nombre, estado in reporte.items()])

@@ -39,6 +39,8 @@ def get_reporte(companeros: dict[str, str],
                 mensaje LIKE 'presente%' COLLATE NOCASE
              OR mensaje LIKE 'ausente%' COLLATE NOCASE
              OR mensaje LIKE 'causa:%' COLLATE NOCASE
+             OR mensaje LIKE '1%' COLLATE NOCASE
+             OR mensaje LIKE '2%' COLLATE NOCASE
           )
         ORDER BY fechahora DESC
     """, (fecha_str, inicio_str, fin_str))
@@ -54,12 +56,33 @@ def get_reporte(companeros: dict[str, str],
     reporte = {}
     for numero, nombre in companeros.items():
         if numero in vistos:
-            msg = vistos[numero]
-            if msg.lower().startswith("presente"):
-                reporte[nombre] = "PRESENTE"
-            elif msg.lower().startswith("ausente") or msg.lower().startswith("causa:"):
-                reporte[nombre] = f"AUSENTE CON CAUSA ({msg})"
+            msg = vistos[numero].strip()
+            msg_lower = msg.lower()
+
+            if msg_lower.startswith("presente") or msg_lower.startswith("1"):
+                # Sacar la palabra "presente"/"1" y mostrar lo que sigue
+                resto = msg_lower.replace("presente", "", 1).replace("1", "", 1).strip()
+                if resto:
+                    reporte[nombre] = f"✅ PRESENTE ({resto})"
+                else:
+                    reporte[nombre] = "✅ PRESENTE"
+
+            elif msg_lower.startswith("ausente") or msg_lower.startswith("2"):
+                # Sacar "ausente"/"2"
+                resto = msg_lower.replace("ausente", "", 1).replace("2", "", 1).strip()
+                if resto:
+                    reporte[nombre] = f"❌ AUSENTE CON CAUSA ({resto})"
+                else:
+                    reporte[nombre] = "❌ AUSENTE CON CAUSA"
+
+            elif msg_lower.startswith("causa:"):
+                # Sacar "causa:"
+                resto = msg_lower.replace("causa:", "", 1).strip()
+                if resto:
+                    reporte[nombre] = f"❌ AUSENTE CON CAUSA ({resto})"
+                else:
+                    reporte[nombre] = "❌ AUSENTE CON CAUSA"
         else:
-            reporte[nombre] = "AUSENTE SIN CAUSA"
+            reporte[nombre] = "⚠️ AUSENTE SIN CAUSA"
 
     return reporte

@@ -15,12 +15,39 @@ def notificar_respuesta(numero: str, mensaje: str) -> None:
     nombre = presentismo.COMPANEROS[numero]
     msg = mensaje.strip().lower()
 
-    if msg.startswith("presente"):
-        texto = f"✅ Hola {nombre}, tu presentismo fue registrado como PRESENTE."
+    if msg.startswith("1") or msg.startswith("presente"):
+        # Eliminar "1" o "presente" y guardar lo que sigue como aclaración
+        aclaracion = msg.replace("presente", "", 1).replace("1", "", 1).strip()
+        if aclaracion:
+            texto = (
+                f"🙌 Gracias {nombre}!\n"
+                "Tu asistencia quedó registrada como ✅ PRESENTE.\n"
+                f"Aclaración: {aclaracion}\n"
+                "¡Que tengas un excelente día! 🌟"
+            )
+        else:
+            texto = (
+                f"🙌 Gracias {nombre}!\n"
+                "Tu asistencia quedó registrada como ✅ PRESENTE.\n"
+                "¡Que tengas un excelente día! 🌟"
+            )
         send_text(numero, texto)
 
-    elif msg.startswith("ausente") or msg.startswith("causa:"):
-        texto = f"❌ Hola {nombre}, tu presentismo fue registrado como AUSENTE ({mensaje})."
+    elif msg.startswith("2") or msg.startswith("ausente") or msg.startswith("causa:"):
+        aclaracion = msg.replace("ausente", "", 1).replace("2", "", 1).replace("causa:", "", 1).strip()
+        if aclaracion:
+            texto = (
+                f"📌 Hola {nombre},\n"
+                f"Registramos tu respuesta como ❌ AUSENTE.\n"
+                f"Motivo: {aclaracion}\n"
+                "Gracias por avisar 🙏, ¡esperamos verte pronto!"
+            )
+        else:
+            texto = (
+                f"📌 Hola {nombre},\n"
+                "Registramos tu respuesta como ❌ AUSENTE.\n"
+                "Gracias por avisar 🙏, ¡esperamos verte pronto!"
+            )
         send_text(numero, texto)
 
     else:
