@@ -39,7 +39,7 @@ def enviar_recordatorio():
     reporte = get_reporte(COMPANEROS, fecha=date.today(), inicio=inicio, fin=fin)
 
     for nombre, estado in reporte.items():
-        if estado == "AUSENTE SIN CAUSA":
+        if estado == "⚠️ AUSENTE SIN CAUSA":
             # Buscar el número a partir del nombre
             numero = next(num for num, nom in COMPANEROS.items() if nom == nombre)
             texto = (
