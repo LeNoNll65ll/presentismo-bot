@@ -1,4 +1,5 @@
 # presentismo.py
+import json
 import os
 import logging
 from datetime import datetime, date, time
@@ -7,6 +8,7 @@ from dotenv import load_dotenv
 
 from evolution_api import send_text
 from db_logic import get_reporte
+from reporte import formato_json
 
 load_dotenv()
 
@@ -18,6 +20,19 @@ COMPANEROS = {
     item.split(":")[0]: item.split(":")[1]
     for item in os.getenv("COMPANEROS", "").split(",")
 }
+
+NOMBRES_COMPLETOS = {
+    "Guarnieri": "CT Franco Guarnieri",
+    "Vera": "CT Víctor Adrián Vera",
+    "Casals": "CT Mauricio Casals",
+    "Olivera": "CT Ezequiel Waldo Olivera",
+    "Amor": "CT Damián Gonzalo Amor",
+    "Guaimas": "CT Fernando Darío Guaimás Rosado",
+    "Perez": "CT Hernán Ariel Pérez",
+    "Sanchez": "CT Santiago Sánchez Albornoz"
+}
+
+
 
 
 RECORDATORIOS = os.getenv("RECORDATORIOS", "07:00,07:15,07:30,08:00,08:15").split(",")
@@ -61,6 +76,18 @@ def enviar_reporte():
     # # Para grupo (sin causas)
     # resumen = "\n".join([f"- {nombre}: {estado.split('(')[0].strip()}" for nombre, estado in reporte.items()])
     # send_text(GRUPO_ID, f"📊 Presentismo {datetime.now().strftime('%d/%m/%Y %H:%M')}\n\n{resumen}")
+
+    # Generar JSON con formato oficial
+    json_formateado = formato_json(reporte, NOMBRES_COMPLETOS)
+
+    # Ruta del archivo en la raíz del proyecto
+    ruta_archivo = os.path.join(os.getcwd(), "datos_parte.json")
+
+    # Guardar archivo
+    with open(ruta_archivo, "w", encoding="utf-8") as f:
+        json.dump(json_formateado, f, indent=2, ensure_ascii=False)
+
+    logging.info(f"📁 Archivo generado: {ruta_archivo}")
 
     # Para admin (con causas)
     detalle = "\n".join([f"- {nombre}: {estado}" for nombre, estado in reporte.items()])
